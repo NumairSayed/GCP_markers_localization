@@ -2,3 +2,4 @@
 .pt
 .log
 predictions.json
+runs/*
