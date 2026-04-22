@@ -1,0 +1,59 @@
+# Default configuration for GCP marker detection
+seed: 42
+
+data:
+  train_dir: /home/numair/Desktop/IISc/misc/skylark_assn/GCP_Assignment_Datasets/train_dataset
+  test_dir: /home/numair/Desktop/IISc/misc/skylark_assn/GCP_Assignment_Datasets/test_dataset
+  annotations: /home/numair/Desktop/IISc/misc/skylark_assn/GCP_Assignment_Datasets/train_dataset/gcp_marks.json
+  val_split: 0.15
+
+  # Classes (None is dropped as it is only ~0.4% of the data)
+  classes:
+    - Cross
+    - Square
+    - L-Shape
+
+  # Input size kept in 16:9 aspect ratio (close to source 4000x2250)
+  # Higher input size preserves tiny markers better.
+  image_size: [1024, 576]  # [W, H]
+
+  # Sigma for the Gaussian heatmap target (in pixels at model resolution)
+  heatmap_sigma: 3.0
+
+model:
+  arch: Unet                 # segmentation_models_pytorch architecture
+  encoder_name: efficientnet-b0
+  encoder_weights: imagenet  # set to null to train from scratch
+  in_channels: 3
+  num_classes: 3             # one heatmap channel per shape class
+
+train:
+  epochs: 60
+  batch_size: 4
+  num_workers: 4
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  optimizer: adamw
+  scheduler: cosine
+  warmup_epochs: 2
+  amp: true
+  grad_clip: 1.0
+
+  # Loss config
+  loss:
+    type: gaussian_focal     # 'gaussian_focal' or 'mse'
+    alpha: 2.0
+    beta: 4.0
+
+  # Checkpointing / logging
+  output_dir: runs/default
+  save_every: 5
+  log_every: 20
+  val_every: 1
+  early_stopping_patience: 10
+
+infer:
+  # Decoding
+  peak_window: 5             # window for sub-pixel soft-argmax refinement
+  tta: true                  # horizontal + vertical flip test-time augmentation
+  batch_size: 4
